@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<project name="cpix-drm" default="jar" basedir=".">
+	<property name="src.dir" value="src"/>
+	<property name="classes.dir" value="bin"/>
+	<!--cpix.wowza library folder-->
+	<property name="libs" value="libs"/>
+	<property name="jar.dir" value="jar"/>
+	<property name="jar.filename" value="cpix-drm-0.1.0.jar"/>
+
+	<path id="classpath">
+		<fileset dir="${libs}">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<!--clean target-->
+	<target name="clean">
+		<delete file="${jar.dir}/${jar.filename}"/>
+	</target>
+
+	<!--compile target-->
+	<target name="compile" depends="clean">
+		<mkdir dir="${classes.dir}"/>
+		<javac srcdir="${src.dir}" destdir="${classes.dir}"  includeantruntime="false" debug="true">
+			<classpath refid="classpath"></classpath>
+			<compilerarg value="-XDignore.symbol.file" />
+		</javac>
+	</target>
+
+	<target name="jar" depends="compile">
+		<jar jarfile="${jar.dir}/${jar.filename}">
+			<fileset dir="${classes.dir}"/>
+		</jar>
+	</target>
+
+</project>
