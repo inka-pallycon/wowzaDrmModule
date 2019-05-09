@@ -32,11 +32,15 @@ import java.util.UUID;
  */
 public abstract class CpixAbstractModule implements CpixModule {
     protected final static String FPS_KEYFORMAT = "com.apple.streamingkeydelivery";
+    protected abstract String getPlayReadyKeyServerUrl();
 
+    public abstract Boolean checkError(String responseData);
     public abstract String getDashKeyInfo(String streamPath, CencInfo cencInfo, String requestUrl, CpixDTO cpixDTO) throws CpixException;
     public abstract String getHlsEncKeyInfo(String streamPath, CupertinoEncInfo encInfo, String requestUrl, CpixDTO cpixDTO) throws CpixException;
-    public abstract Boolean checkError(String responseData);
-    protected abstract String getPlayReadyKeyServerUrl();
+    public abstract void setDashKeyInfo(CpixDTO responseCpixDTO, CencInfo cencInfo) throws CpixException;
+    public abstract void setHlsKeyInfo(CpixDTO responseCpixDTO, CupertinoEncInfo encInfo) throws CpixException;
+
+
     /**
      *
      * @param requestUrl
@@ -121,71 +125,6 @@ public abstract class CpixAbstractModule implements CpixModule {
             throw new CpixException("Response CPIX Data Parsing Failed.");
         }
         return cpixDTO;
-    }
-
-    /**
-     *
-     * @param responseCpixDTO
-     * @param cencInfo
-     * @throws CpixException
-     */
-    public void setDashKeyInfo(CpixDTO responseCpixDTO, CencInfo cencInfo) throws CpixException {
-        byte[] keyId, key;
-        //key info
-        if( 0 < responseCpixDTO.getContentKeyList().size()){
-            keyId = StringUtil.guidStringToByteArray(responseCpixDTO.getContentKeyList().get(0).getKid()) ;
-            key = Base64.decode(responseCpixDTO.getContentKeyList().get(0).getData().getSecret().getPlainValue());
-
-            cencInfo.setAlgorithm(CencInfo.ALGORITHMID_CTR);
-            cencInfo.setKID(keyId);
-            cencInfo.setEncKeyBytes(key);
-        }else{
-            throw new CpixException("Key informations were invalid.");
-        }
-
-        // add DRM info for first DRM system (Widevine in this case)
-        //widevine info
-        responseCpixDTO.getDrmSystemList().stream().forEach(drmSystemDTO -> {
-            if(DRMSystemId.WIDEVINE.equals(drmSystemDTO.getSystemId())){
-                CencDRMInfoWidevine cencDRMInfoWidevine = new CencDRMInfoWidevine();
-                cencDRMInfoWidevine.setPsshData(Base64.decode(drmSystemDTO.getPssh()));
-                cencInfo.addDRM("myWidevineDRM:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed", cencDRMInfoWidevine);
-            }else if(DRMSystemId.PLAYREADY.equals(drmSystemDTO.getSystemId())){
-                // add PlayReady DRM info
-                CencDRMInfoPlayready cencDRMInfoPlayready = new CencDRMInfoPlayready();
-                PlayReadyKeyInfo playReadyKeyInfo = new PlayReadyKeyInfo();
-                playReadyKeyInfo.setLicenseURL(getPlayReadyKeyServerUrl());
-                playReadyKeyInfo.setKeyId(keyId);
-                playReadyKeyInfo.setContentKey(key);
-                playReadyKeyInfo.generateChecksum();
-                cencDRMInfoPlayready.setPlayReadyKeyInfo(playReadyKeyInfo);
-                cencInfo.addDRM("myPlayReadyDRM:9a04f079-9840-4286-ab92-e65be0885f95", cencDRMInfoPlayready);
-            }
-        });
-    }
-
-    public void setHlsKeyInfo(CpixDTO responseCpixDTO, CupertinoEncInfo encInfo) throws CpixException {
-        byte[] key, iv;
-        //key info
-        if( 0 < responseCpixDTO.getContentKeyList().size()){
-            key = Base64.decode(responseCpixDTO.getContentKeyList().get(0).getData().getSecret().getPlainValue());
-            iv = Base64.decode(responseCpixDTO.getContentKeyList().get(0).getExplicitIV());
-            responseCpixDTO.getDrmSystemList().stream().forEach(drmSystemDTO -> {
-                if( DRMSystemId.FAIRPLAY.equals(drmSystemDTO.getSystemId())){
-                    encInfo.setEncMethod(CupertinoEncInfo.METHOD_SAMPLE_AES);
-                    encInfo.setEncKeyFormat(this.FPS_KEYFORMAT);
-                }else if(DRMSystemId.HLSAES.equals(drmSystemDTO.getSystemId())){
-                    encInfo.setEncMethod(CupertinoEncInfo.METHOD_AES_128);
-                }
-                encInfo.setEncUrl(drmSystemDTO.getUriExtXKey());
-                encInfo.setEncKeyBytes(key);
-                encInfo.setEncIVBytes(iv);
-                encInfo.setEncKeyFormatVersion("1");
-                encInfo.setEncIVBytesInChunklist(false);
-            });
-        }else{
-            throw new CpixException("Key informations were invalid.");
-        }
     }
 
     public void createRandomContentKey(ContentKeyDTO contentKeyDTO){

@@ -10,7 +10,7 @@ import org.json.simple.parser.JSONParser;
 /**
  * Created by Brown on 2019-02-08.
  */
-public class PallyConModule extends CpixAbstractModule{
+public class PallyConModule extends WowzaModule{
     private final static String PALLYCON_PLAYREADY_URL = "https://license.pallycon.com/ri/playready/licenseManager.do";
 
     @Override

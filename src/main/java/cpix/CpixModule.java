@@ -15,16 +15,17 @@ import java.util.Map;
  */
 public interface CpixModule {
 
-    String getDashKeyInfo(String streamPath, CencInfo cencInfo, String requestUrl, CpixDTO cpixDTO) throws CpixException;
-    String getHlsEncKeyInfo(String streamPath, CupertinoEncInfo encInfo, String requestUrl, CpixDTO cpixDTO) throws CpixException;
     String callMethodGetDrmKeyServer(String requestUrl, Map<String, String> headerMap, Map<String, Object> parameterMap) throws UnirestException;
     String callMethodGetDrmKeyServer(String requestUrl, Map<String, String> headerMap) throws Exception;
     String callMethodPostDrmKeyServer(String requestData, String requestUrl, Map<String, String> headerMap) throws Exception;
     String callMethodPostDrmKeyServer(String requestData, String requestUrl) throws CpixException;
+    Boolean checkError(String responseData);
+    void createRandomContentKey(ContentKeyDTO contentKeyDTO);
+    String getDashKeyInfo(String streamPath, CencInfo cencInfo, String requestUrl, CpixDTO cpixDTO) throws CpixException;
+    String getHlsEncKeyInfo(String streamPath, CupertinoEncInfo encInfo, String requestUrl, CpixDTO cpixDTO) throws CpixException;
     CpixDTO parseCpixData(String cpixData) throws CpixException;
     void setDashKeyInfo(CpixDTO responseCpixDTO, CencInfo cencInfo) throws CpixException;
     void setHlsKeyInfo(CpixDTO responseCpixDTO, CupertinoEncInfo encInfo) throws CpixException;
-    void createRandomContentKey(ContentKeyDTO contentKeyDTO);
-    Boolean checkError(String responseData);
+
 
 }
