@@ -45,9 +45,9 @@ public class HlsFairPlay extends ModuleBase {
      */
     public void onHTTPCupertinoEncryptionKeyVODChunk(HTTPStreamerSessionCupertino httpSession, IHTTPStreamerCupertinoIndex index, CupertinoEncInfo encInfo, long chunkId, int mode){
         String apiResponseData;
-        CpixBuilder cpixBuilder = new CpixBuilder(false);
+        CpixBuilder cpixBuilder = new CpixBuilder();
         // HLS AES-128
-        CpixDTO requestCpix = cpixBuilder.setHlsAes128().getCpixDTO();
+        CpixDTO requestCpix = cpixBuilder.setHlsAes128().build();
         CpixModule cpixModule = new PallyConModule();
 
         try {
@@ -86,9 +86,9 @@ public class HlsFairPlay extends ModuleBase {
      * @param mode
      */
     public void onHTTPCupertinoEncryptionKeyLiveChunk(ILiveStreamPacketizer liveStreamPacketizer, String streamName, CupertinoEncInfo encInfo, long chunkId, int mode){
-        CpixBuilder cpixBuilder = new CpixBuilder(this.keyrotation);
+        CpixBuilder cpixBuilder = new CpixBuilder();
         // FairPlay
-        CpixDTO requestCpix = cpixBuilder.setFairPlay().getCpixDTO();
+        CpixDTO requestCpix = cpixBuilder.setKeyRotation(this.keyrotation).setFairPlay().build();
         CpixModule cpixModule = new PallyConModule();
         try {
             String apiResponseData = cpixModule.getHlsEncKeyInfo( streamName, encInfo

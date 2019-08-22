@@ -30,7 +30,7 @@ public class PallyConModuleTest {
     }
     @Test
     public void parseCpixData() throws Exception {
-        String cpix = CpixAbstractModule.toCpixString(new CpixBuilder(false).setFairPlay().getCpixDTO());
+        String cpix = CpixAbstractModule.toCpixString(new CpixBuilder().setFairPlay().build());
         logger.info(cpix);
         String cpixData = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<cpix:CPIX xmlns:cpix=\"urn:dashif:org:cpix\" xmlns:pskc=\"urn:ietf:params:xml:ns:keyprov:pskc\">\n" +
@@ -92,7 +92,7 @@ public class PallyConModuleTest {
         new Random().nextBytes(key);
         String fairplayExtXKey = "skd://" + Base64.encodeBytes(kid);
 
-        CpixDTO cpixDTO = new CpixBuilder(false).setFairPlay().getCpixDTO();
+        CpixDTO cpixDTO = new CpixBuilder().setFairPlay().build();
         cpixDTO.setId("errorCID");
         cpixDTO.getContentKeyList().get(0).setExplicitIV(Base64.encodeBytes(iv));
         cpixDTO.getContentKeyList().get(0).getData().getSecret().setPlainValue(Base64.encodeBytes(key));
@@ -103,7 +103,7 @@ public class PallyConModuleTest {
 
     @Test
     public void toCpixString() throws Exception {
-        String cpix = CpixAbstractModule.toCpixString(new CpixBuilder(false).setFairPlay().getCpixDTO());
+        String cpix = CpixAbstractModule.toCpixString(new CpixBuilder().setFairPlay().build());
         logger.info(cpix);
         assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<cpix:CPIX xmlns:cpix=\"urn:dashif:org:cpix\" xmlns:pskc=\"urn:ietf:params:xml:ns:keyprov:pskc\">\n" +

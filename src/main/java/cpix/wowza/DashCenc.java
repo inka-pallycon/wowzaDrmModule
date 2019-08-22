@@ -37,11 +37,11 @@ public class DashCenc extends ModuleBase {
     }
     public void onHTTPMPEGDashEncryptionKeyLiveChunk(ILiveStreamPacketizer liveStreamPacketizer, String streamName, CencInfo cencInfo, long chunkId)
     {
-        CpixBuilder cpixBuilder = new CpixBuilder(keyrotation);
+        CpixBuilder cpixBuilder = new CpixBuilder();
         CpixDTO requestCpix = cpixBuilder.setPeriodIndex(chunkId)
                                             .setWidevine()
                                             .setPlayReady()
-                                            .getCpixDTO();
+                                            .build();
         CpixModule cpixModule = new PallyConModule();
         try {
             String apiResponseData = cpixModule.getDashKeyInfo(streamName, cencInfo
@@ -84,11 +84,11 @@ public class DashCenc extends ModuleBase {
     public void onHTTPMPEGDashEncryptionKeyVODChunk(HTTPStreamerSessionMPEGDash httpSession
             , IHTTPStreamerMPEGDashIndex index, CencInfo cencInfo, long chunkId) {
         String apiResponseData;
-        CpixBuilder cpixBuilder = new CpixBuilder(false);
+        CpixBuilder cpixBuilder = new CpixBuilder();
 
         CpixDTO requestCpix = cpixBuilder.setWidevine()
                                             .setPlayReady()
-                                            .getCpixDTO();
+                                            .build();
         CpixModule cpixModule = new PallyConModule();
 
         try {
