@@ -4,7 +4,6 @@ import com.wowza.util.Base64;
 import cpix.CpixBuilder;
 
 import cpix.CpixModule;
-import cpix.PallyConModule;
 import cpix.dto.CpixDTO;
 import cpix.exception.CpixException;
 import cpix.session.SessionChecker;
@@ -44,30 +43,24 @@ public class HlsFairPlay extends ModuleBase {
      * @param mode
      */
     public void onHTTPCupertinoEncryptionKeyVODChunk(HTTPStreamerSessionCupertino httpSession, IHTTPStreamerCupertinoIndex index, CupertinoEncInfo encInfo, long chunkId, int mode){
-        String apiResponseData;
+        CpixDTO responseCpixDTO;
         CpixBuilder cpixBuilder = new CpixBuilder();
         // HLS AES-128
         CpixDTO requestCpix = cpixBuilder.setHlsAes128().build();
-        CpixModule cpixModule = new PallyConModule();
+
+        WowzaModule wowzaModule = new PallyConModule();
 
         try {
             String sessionId = httpSession.getSessionId();
             if(!SessionChecker.getInstance(getLogger()).isValid(sessionId)) {
-                apiResponseData = cpixModule.getHlsEncKeyInfo( httpSession.getStreamName(), encInfo
+                responseCpixDTO = wowzaModule.getDrmKeyInfo( httpSession.getStreamName()
                         , requestUrl + pallyconEncToken, requestCpix);
-
-                SessionChecker.getInstance(getLogger()).setSession(sessionId, apiResponseData);
+                wowzaModule.setHlsKeyInfo(responseCpixDTO, encInfo);
+                SessionChecker.getInstance(getLogger()).setSession(sessionId, responseCpixDTO);
             }else{
-                apiResponseData = SessionChecker.getInstance(getLogger()).getSession(sessionId);
+                responseCpixDTO = SessionChecker.getInstance(getLogger()).getSession(sessionId);
             }
-            getLogger().info(apiResponseData);
-
-            if(cpixModule.checkError(apiResponseData)){
-                CpixDTO responseCpixDTO = cpixModule.parseCpixData(apiResponseData);
-                cpixModule.setHlsKeyInfo(responseCpixDTO, encInfo);
-            }else{
-                throw new CpixException(apiResponseData);
-            }
+            getLogger().info(responseCpixDTO.getId());
         } catch (CpixException e) {
             getLogger().error(e.toString());
             //TODO
@@ -86,19 +79,16 @@ public class HlsFairPlay extends ModuleBase {
      * @param mode
      */
     public void onHTTPCupertinoEncryptionKeyLiveChunk(ILiveStreamPacketizer liveStreamPacketizer, String streamName, CupertinoEncInfo encInfo, long chunkId, int mode){
+        CpixDTO responseCpixDTO;
         CpixBuilder cpixBuilder = new CpixBuilder();
         // FairPlay
         CpixDTO requestCpix = cpixBuilder.setKeyRotation(this.keyrotation).setFairPlay().build();
-        CpixModule cpixModule = new PallyConModule();
+        WowzaModule wowzaModule = new PallyConModule();
         try {
-            String apiResponseData = cpixModule.getHlsEncKeyInfo( streamName, encInfo
+            responseCpixDTO = wowzaModule.getDrmKeyInfo( streamName
                     , this.requestUrl+this.pallyconEncToken, requestCpix);
-            if(cpixModule.checkError(apiResponseData)){
-                CpixDTO responseCpixDTO = cpixModule.parseCpixData(apiResponseData);
-                cpixModule.setHlsKeyInfo(responseCpixDTO, encInfo);
-            }else{
-                throw new CpixException(apiResponseData);
-            }
+            wowzaModule.setHlsKeyInfo(responseCpixDTO, encInfo);
+
         } catch (CpixException e) {
             getLogger().error(e.toString());
             //TODO

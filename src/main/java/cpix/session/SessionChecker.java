@@ -1,12 +1,13 @@
 package cpix.session;
 
 import com.wowza.wms.logging.WMSLogger;
+import cpix.dto.CpixDTO;
 
 import java.util.HashMap;
 
 public class SessionChecker
 {
-    public static HashMap<String, String> map = new HashMap();
+    public static HashMap<String, CpixDTO> map = new HashMap();
     public static cpix.session.SessionChecker instance = null;
     public WMSLogger logger = null;
 
@@ -28,13 +29,13 @@ public class SessionChecker
         return map.containsKey(sessionId);
     }
 
-    public void setSession(String sessionId, String value)
+    public void setSession(String sessionId, CpixDTO value)
     {
         map.put(sessionId, value);
         this.logger.info("Session added. total count : " + map.size());
     }
 
-    public String getSession(String sessionId) {
+    public CpixDTO getSession(String sessionId) {
         this.logger.info("Session total count : " + map.size());
         return map.get(sessionId);
     }

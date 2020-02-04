@@ -1,4 +1,4 @@
-package cpix;
+package cpix.wowza;
 
 import com.wowza.util.Base64;
 import com.wowza.wms.drm.cenc.CencDRMInfoPlayready;
@@ -6,22 +6,60 @@ import com.wowza.wms.drm.cenc.CencDRMInfoWidevine;
 import com.wowza.wms.drm.cenc.CencInfo;
 import com.wowza.wms.drm.playready.PlayReadyKeyInfo;
 import com.wowza.wms.httpstreamer.cupertinostreaming.util.CupertinoEncInfo;
+import cpix.CPixCommonModule;
 import cpix.dto.CpixDTO;
 import cpix.dto.DRMSystemId;
 import cpix.exception.CpixException;
 import cpix.util.StringUtil;
 
+import static cpix.CPixCommonModule.toCpixString;
+
+
 /**
- * Created by Brown on 2019-05-09.
+ * Created by Brown on 2019-02-08.
  */
-public abstract class WowzaModule extends CpixAbstractModule{
+public class PallyConModule implements WowzaModule {
+    private final static String PALLYCON_PLAYREADY_URL = "https://license.pallycon.com/ri/playready/licenseManager.do";
+    private final static String FPS_KEYFORMAT = "com.apple.streamingkeydelivery";
+    private CPixCommonModule cPixCommonModule = new CPixCommonModule();
+
+    public CpixDTO getDrmKeyInfo(String streamPath, String requestUrl, CpixDTO cpixDTO) throws CpixException {
+        CpixDTO responseCpixDTO;
+        String contentId= getStreamName(streamPath);
+        cpixDTO.setId(contentId);
+
+        String responseData = cPixCommonModule.callMethodPostDrmKeyServer(toCpixString(cpixDTO), requestUrl);
+        if(cPixCommonModule.checkError(responseData)){
+            responseCpixDTO = cPixCommonModule.parseCpixData(responseData);
+        }else{
+            throw new CpixException(responseData);
+        }
+        return responseCpixDTO;
+
+    }
+
+    protected String getPlayReadyKeyServerUrl() {
+        return this.PALLYCON_PLAYREADY_URL;
+    }
+
+    private String getStreamName(String filePath) throws NullPointerException{
+        String streamName;
+        String[] stream = filePath.replace('\\', '/').split("/");
+        if(stream == null) {
+            throw new NullPointerException("stream name is null.");
+        } else if(stream.length < 1) {
+            streamName = filePath;
+        } else {
+            streamName = stream[stream.length - 1];
+        }
+        return streamName;
+    }
     /**
      *
      * @param responseCpixDTO
      * @param cencInfo
      * @throws CpixException
      */
-    @Override
     public void setDashKeyInfo(CpixDTO responseCpixDTO, CencInfo cencInfo) throws CpixException {
         byte[] keyId, key;
         //key info
@@ -57,7 +95,6 @@ public abstract class WowzaModule extends CpixAbstractModule{
         });
     }
 
-    @Override
     public void setHlsKeyInfo(CpixDTO responseCpixDTO, CupertinoEncInfo encInfo) throws CpixException {
         byte[] key, iv;
         //key info
@@ -81,4 +118,5 @@ public abstract class WowzaModule extends CpixAbstractModule{
             throw new CpixException("Key informations were invalid.");
         }
     }
+
 }

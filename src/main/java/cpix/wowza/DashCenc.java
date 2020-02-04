@@ -3,9 +3,9 @@ package cpix.wowza;
 import com.wowza.wms.drm.cenc.CencDRMInfoPlayready;
 import com.wowza.wms.drm.cenc.CencDRMInfoWidevine;
 import com.wowza.wms.drm.playready.PlayReadyKeyInfo;
+import cpix.CPixCommonModule;
 import cpix.CpixBuilder;
 import cpix.CpixModule;
-import cpix.PallyConModule;
 import cpix.dto.CpixDTO;
 import cpix.exception.CpixException;
 import cpix.session.SessionChecker;
@@ -42,35 +42,17 @@ public class DashCenc extends ModuleBase {
                                             .setWidevine()
                                             .setPlayReady()
                                             .build();
-        CpixModule cpixModule = new PallyConModule();
+        WowzaModule wowzaModule = new PallyConModule();
         try {
-            String apiResponseData = cpixModule.getDashKeyInfo(streamName, cencInfo
+            CpixDTO responseCpixDTO = wowzaModule.getDrmKeyInfo(streamName
                     , requestUrl + "/" + pallyconEncToken, requestCpix);
-            if(cpixModule.checkError(apiResponseData)){
-                CpixDTO responseCpixDTO = cpixModule.parseCpixData(apiResponseData);
-                cpixModule.setDashKeyInfo(responseCpixDTO, cencInfo);
-            }else{
-                throw new CpixException(apiResponseData);
-            }
+            wowzaModule.setDashKeyInfo(responseCpixDTO, cencInfo);
         } catch (CpixException e) {
+            getLogger().error(e.toString());
             //TODO
             // If an error occurs, must be set random key.
             // Otherwise, it will be the original stream.
-            getLogger().error(e.toString());
-            byte[] block = new byte[16];
-            new Random().nextBytes(block);
-            CencDRMInfoWidevine cencDRMInfoWidevine = new CencDRMInfoWidevine();
-            cencDRMInfoWidevine.setPsshData(block);
-            cencInfo.addDRM("myWidevineDRM:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed", cencDRMInfoWidevine);
-            // add PlayReady DRM info
-            CencDRMInfoPlayready cencDRMInfoPlayready = new CencDRMInfoPlayready();
-            PlayReadyKeyInfo playReadyKeyInfo = new PlayReadyKeyInfo();
-            playReadyKeyInfo.setLicenseURL(this.requestUrl);
-            playReadyKeyInfo.setKeyId(block);
-            playReadyKeyInfo.setContentKey(block);
-            playReadyKeyInfo.generateChecksum();
-            cencDRMInfoPlayready.setPlayReadyKeyInfo(playReadyKeyInfo);
-            cencInfo.addDRM("myPlayReadyDRM:9a04f079-9840-4286-ab92-e65be0885f95", cencDRMInfoPlayready);
+            createRandomKeyInfo(cencInfo);
         }
     }
 
@@ -83,53 +65,52 @@ public class DashCenc extends ModuleBase {
      */
     public void onHTTPMPEGDashEncryptionKeyVODChunk(HTTPStreamerSessionMPEGDash httpSession
             , IHTTPStreamerMPEGDashIndex index, CencInfo cencInfo, long chunkId) {
-        String apiResponseData;
+        CpixDTO responseCpixDTO;
         CpixBuilder cpixBuilder = new CpixBuilder();
 
         CpixDTO requestCpix = cpixBuilder.setWidevine()
                                             .setPlayReady()
                                             .build();
-        CpixModule cpixModule = new PallyConModule();
 
+        WowzaModule wowzaModule = new PallyConModule();
         try {
             String sessionId = httpSession.getSessionId();
             if(!SessionChecker.getInstance(getLogger()).isValid(sessionId)) {
-                apiResponseData = cpixModule.getDashKeyInfo( httpSession.getStreamName(), cencInfo
+                responseCpixDTO = wowzaModule.getDrmKeyInfo(httpSession.getStreamName()
                         , requestUrl + "/" + pallyconEncToken, requestCpix);
+                wowzaModule.setDashKeyInfo(responseCpixDTO, cencInfo);
 
-                SessionChecker.getInstance(getLogger()).setSession(sessionId, apiResponseData);
+                SessionChecker.getInstance(getLogger()).setSession(sessionId, responseCpixDTO);
             }else{
-                apiResponseData = SessionChecker.getInstance(getLogger()).getSession(sessionId);
+                responseCpixDTO = SessionChecker.getInstance(getLogger()).getSession(sessionId);
             }
-            getLogger().info(apiResponseData);
+            getLogger().info(responseCpixDTO.getId());
+            wowzaModule.setDashKeyInfo(responseCpixDTO, cencInfo);
 
-            if(cpixModule.checkError(apiResponseData)){
-                CpixDTO responseCpixDTO = cpixModule.parseCpixData(apiResponseData);
-                cpixModule.setDashKeyInfo(responseCpixDTO, cencInfo);
-            }else{
-                throw new CpixException(apiResponseData);
-            }
         } catch (CpixException e) {
             getLogger().error(e.toString());
             //TODO
             // If an error occurs, must be set random key.
             // Otherwise, it will be the original stream.
-            getLogger().error(e.toString());
-            byte[] block = new byte[16];
-            new Random().nextBytes(block);
-            CencDRMInfoWidevine cencDRMInfoWidevine = new CencDRMInfoWidevine();
-            cencDRMInfoWidevine.setPsshData(block);
-            cencInfo.addDRM("myWidevineDRM:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed", cencDRMInfoWidevine);
-            // add PlayReady DRM info
-            CencDRMInfoPlayready cencDRMInfoPlayready = new CencDRMInfoPlayready();
-            PlayReadyKeyInfo playReadyKeyInfo = new PlayReadyKeyInfo();
-            playReadyKeyInfo.setLicenseURL(this.requestUrl);
-            playReadyKeyInfo.setKeyId(block);
-            playReadyKeyInfo.setContentKey(block);
-            playReadyKeyInfo.generateChecksum();
-            cencDRMInfoPlayready.setPlayReadyKeyInfo(playReadyKeyInfo);
-            cencInfo.addDRM("myPlayReadyDRM:9a04f079-9840-4286-ab92-e65be0885f95", cencDRMInfoPlayready);
+            createRandomKeyInfo(cencInfo);
         }
+    }
+
+    private void createRandomKeyInfo(CencInfo cencInfo){
+        byte[] block = new byte[16];
+        new Random().nextBytes(block);
+        CencDRMInfoWidevine cencDRMInfoWidevine = new CencDRMInfoWidevine();
+        cencDRMInfoWidevine.setPsshData(block);
+        cencInfo.addDRM("myWidevineDRM:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed", cencDRMInfoWidevine);
+        // add PlayReady DRM info
+        CencDRMInfoPlayready cencDRMInfoPlayready = new CencDRMInfoPlayready();
+        PlayReadyKeyInfo playReadyKeyInfo = new PlayReadyKeyInfo();
+        playReadyKeyInfo.setLicenseURL(this.requestUrl);
+        playReadyKeyInfo.setKeyId(block);
+        playReadyKeyInfo.setContentKey(block);
+        playReadyKeyInfo.generateChecksum();
+        cencDRMInfoPlayready.setPlayReadyKeyInfo(playReadyKeyInfo);
+        cencInfo.addDRM("myPlayReadyDRM:9a04f079-9840-4286-ab92-e65be0885f95", cencDRMInfoPlayready);
     }
 
 

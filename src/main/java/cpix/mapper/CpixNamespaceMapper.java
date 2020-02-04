@@ -1,6 +1,7 @@
 package cpix.mapper;
 
-import com.sun.xml.internal.bind.marshaller.NamespacePrefixMapper;
+
+import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 
 public class CpixNamespaceMapper extends NamespacePrefixMapper {
     private static final String CPIX_PREFIX = "cpix"; // DEFAULT NAMESPACE

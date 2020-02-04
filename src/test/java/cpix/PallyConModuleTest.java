@@ -5,6 +5,8 @@ import cpix.util.StringUtil;
 import com.wowza.util.Base64;
 import com.wowza.wms.drm.cenc.CencInfo;
 import com.wowza.wms.drm.cenc.ICencDRMInfo;
+import cpix.wowza.PallyConModule;
+import cpix.wowza.WowzaModule;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -22,15 +24,15 @@ public class PallyConModuleTest {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
     CpixDTO requestCpixDTO;
     CpixDTO responseCpixDTO;
-    CpixAbstractModule cpixAbstractModule;
+    CPixCommonModule cPixCommonModule;
 
     @Before
     public void setUp() throws Exception{
-        this.cpixAbstractModule = new PallyConModule();
+        this.cPixCommonModule = new CPixCommonModule();
     }
     @Test
     public void parseCpixData() throws Exception {
-        String cpix = CpixAbstractModule.toCpixString(new CpixBuilder().setFairPlay().build());
+        String cpix = cPixCommonModule.toCpixString(new CpixBuilder().setFairPlay().build());
         logger.info(cpix);
         String cpixData = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<cpix:CPIX xmlns:cpix=\"urn:dashif:org:cpix\" xmlns:pskc=\"urn:ietf:params:xml:ns:keyprov:pskc\">\n" +
@@ -41,7 +43,7 @@ public class PallyConModuleTest {
                 "        <cpix:DRMSystem kid=\"a0ec4f4a-8edd-4e3a-9f7b-b2aef76f770a\" systemId=\"94CE86FB-07FF-4F43-ADB8-93D2FA968CA2\"/>\n" +
                 "    </cpix:DRMSystemList>\n" +
                 "</cpix:CPIX>";
-        CpixDTO cpixDTO = cpixAbstractModule.parseCpixData(cpixData);
+        CpixDTO cpixDTO = cPixCommonModule.parseCpixData(cpixData);
         assertEquals("a0ec4f4a-8edd-4e3a-9f7b-b2aef76f770a", cpixDTO.getContentKeyList().get(0).getKid());
         assertEquals("94CE86FB-07FF-4F43-ADB8-93D2FA968CA2", cpixDTO.getDrmSystemList().get(0).getSystemId());
     }
@@ -68,9 +70,12 @@ public class PallyConModuleTest {
                 "        </cpix:DRMSystem>\n" +
                 "    </cpix:DRMSystemList>\n" +
                 "</cpix:CPIX>";
-        CpixDTO cpixDTO = cpixAbstractModule.parseCpixData(responseData);
+        CpixDTO cpixDTO = cPixCommonModule.parseCpixData(responseData);
+
         CencInfo cencInfo = new CencInfo();
-        cpixAbstractModule.setDashKeyInfo(cpixDTO, cencInfo);
+        WowzaModule wowzaModule = new PallyConModule();
+
+        wowzaModule.setDashKeyInfo(cpixDTO, cencInfo);
         assertEquals("7F841EB7-514C-28A7-D965-68656F25BE31", cencInfo.getKID());
         assertEquals("Q3R2DJqAjr0ao8igD23XIw==", cencInfo.getEncKeyString());
         Map<String, ICencDRMInfo> cencDrms = cencInfo.getDRMs();
@@ -83,37 +88,20 @@ public class PallyConModuleTest {
     }
 
     @Test
-    public void setHlsKeyInfo() throws Exception {
-        byte[] kid = new byte[16];
-        new Random().nextBytes(kid);
-        byte[] iv = new byte[16];
-        new Random().nextBytes(iv);
-        byte[] key = new byte[16];
-        new Random().nextBytes(key);
-        String fairplayExtXKey = "skd://" + Base64.encodeBytes(kid);
-
-        CpixDTO cpixDTO = new CpixBuilder().setFairPlay().build();
-        cpixDTO.setId("errorCID");
-        cpixDTO.getContentKeyList().get(0).setExplicitIV(Base64.encodeBytes(iv));
-        cpixDTO.getContentKeyList().get(0).getData().getSecret().setPlainValue(Base64.encodeBytes(key));
-        cpixDTO.getContentKeyList().get(0).setKid(StringUtil.getGuidFromByteArray(kid));
-        cpixDTO.getDrmSystemList().get(0).setKid(StringUtil.getGuidFromByteArray(kid));
-        cpixDTO.getDrmSystemList().get(0).setUriExtXKey(Base64.encodeBytes(fairplayExtXKey.getBytes()));
-    }
-
-    @Test
     public void toCpixString() throws Exception {
-        String cpix = CpixAbstractModule.toCpixString(new CpixBuilder().setFairPlay().build());
+        CpixDTO cpixDTO = new CpixBuilder().setFairPlay().build();
+        String kid = cpixDTO.getContentKeyList().stream().findFirst().get().getKid();
+        String cpix = cPixCommonModule.toCpixString(cpixDTO);
         logger.info(cpix);
         assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<cpix:CPIX xmlns:cpix=\"urn:dashif:org:cpix\" xmlns:pskc=\"urn:ietf:params:xml:ns:keyprov:pskc\">\n" +
                 "    <cpix:ContentKeyList>\n" +
-                "        <cpix:ContentKey kid=\"a0ec4f4a-8edd-4e3a-9f7b-b2aef76f770a\"/>\n" +
+                "        <cpix:ContentKey kid=\"" + kid + "\"/>\n" +
                 "    </cpix:ContentKeyList>\n" +
                 "    <cpix:DRMSystemList>\n" +
-                "        <cpix:DRMSystem kid=\"a0ec4f4a-8edd-4e3a-9f7b-b2aef76f770a\" systemId=\"94CE86FB-07FF-4F43-ADB8-93D2FA968CA2\"/>\n" +
+                "        <cpix:DRMSystem kid=\"" + kid + "\" systemId=\"94CE86FB-07FF-4F43-ADB8-93D2FA968CA2\"/>\n" +
                 "    </cpix:DRMSystemList>\n" +
-                "</cpix:CPIX>", cpix);
+                "</cpix:CPIX>\n", cpix);
     }
 
 }

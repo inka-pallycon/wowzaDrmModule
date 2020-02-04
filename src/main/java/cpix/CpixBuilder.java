@@ -13,6 +13,7 @@ public class CpixBuilder {
     private final static String PREFIX_KEY_PERIOD_ID = "keyPeriod_";
 
     private String kId;
+    private String id = null;
     private boolean keyRotation = false;
     private List<ContentKeyDTO> contentKeyList;
     private List<DrmSystemDTO> drmSystemList;
@@ -66,10 +67,16 @@ public class CpixBuilder {
         this.drmSystemList.add(drmSystemDTO);
         return this;
     }
+    public CpixBuilder setId(String id){
+        this.id = id;
+        return this;
+    }
+
     public CpixDTO build(){
         CpixDTO cpixDTO = new CpixDTO();
         cpixDTO.setContentKeyList(this.contentKeyList);
         cpixDTO.setDrmSystemList(this.drmSystemList);
+        cpixDTO.setId(this.id);
         if(this.keyRotation){
             List<ContentKeyPeriodDTO> contentKeyPeriodList = new ArrayList<>();
             ContentKeyPeriodDTO contentKeyPeriodDTO = new ContentKeyPeriodDTO(this.PREFIX_KEY_PERIOD_ID + this.kId);
