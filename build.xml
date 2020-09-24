@@ -1,14 +1,18 @@
 <?xml version="1.0"?>
-<project name="cpix-drm" default="jar" basedir=".">
-	<property name="src.dir" value="src"/>
-	<property name="classes.dir" value="bin"/>
-	<!--cpix.wowza library folder-->
-	<property name="libs" value="libs"/>
-	<property name="jar.dir" value="jar"/>
-	<property name="jar.filename" value="cpix-drm-0.1.0.jar"/>
+<project name="MultiDrmModule" default="jar" basedir=".">
 
-	<path id="classpath">
-		<fileset dir="${libs}">
+	<property name="cpix.wowza.lib.dir" value="{wowza library folder}"/>
+	<property name="jar.filename" value="pallycon-wowza-cpix-1.0.0.jar"/>
+	<property name="core.build.dir" value="."/>
+	<property name="src.dir" value="src/main"/>
+	<property name="classes.dir" value="target/classes"/>
+	<property name="jar.dir" value="./jar"/>
+
+	<path id="multidrmmodule.classpath">
+		<fileset dir="${cpix.wowza.lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="${jar.dir}">
 			<include name="*.jar" />
 		</fileset>
 	</path>
@@ -22,8 +26,7 @@
 	<target name="compile" depends="clean">
 		<mkdir dir="${classes.dir}"/>
 		<javac srcdir="${src.dir}" destdir="${classes.dir}"  includeantruntime="false" debug="true">
-			<classpath refid="classpath"></classpath>
-			<compilerarg value="-XDignore.symbol.file" />
+			<classpath refid="multidrmmodule.classpath"></classpath>
 		</javac>
 	</target>
 
