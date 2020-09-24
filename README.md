@@ -8,7 +8,9 @@ PallyCon Wowza Integration SDK is an extension module of Wowza Streaming Engine 
 | HLS FairPlay | Dash Widevine | Dash PlayReady |
 |:------|:------|:------|
 | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-DASH-CENC : Widevine Modular, PlayReady DRM
+
+
+DASH-CENC : Widevine Modular, PlayReady DRM  
 HLS-AES : FairPlay Streaming DRM
 
 allyCon Wowza Integration SDK supports Wowza Streaming Engine 4.8 or later or later and recommends interworking of storage and CDN service through Wowza Media Cache to improve streaming performance.
